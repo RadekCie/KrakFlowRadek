@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
-import 'task_repository.dart';
+import '../models/task.dart';
 
 class TaskApiService {
   static const String baseUrl = "https://dummyjson.com";
@@ -12,12 +12,13 @@ class TaskApiService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final List todos = data["todos"];
-
       final random = Random();
       final priorities = ["niski", "średni", "wysoki"];
       final deadlines = ["dziś", "jutro", "za tydzień", "pilne"];
+
       return todos.map((todo) {
         return Task(
+          id: todo["id"], // Pobieramy ID z API
           title: todo["todo"],
           done: todo["completed"],
           deadline: deadlines[random.nextInt(deadlines.length)],
@@ -25,7 +26,7 @@ class TaskApiService {
         );
       }).toList();
     } else {
-      throw Exception("Błąd połączenia: ${response.statusCode}");
+      throw Exception("Błąd API: ${response.statusCode}");
     }
   }
 }
