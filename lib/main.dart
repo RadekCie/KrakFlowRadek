@@ -4,11 +4,13 @@ import 'dart:math';
 import 'models/task.dart';
 import 'services/task_local_database.dart';
 import 'services/task_sync_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox("tasks");
+  await NotificationService.init();
   runApp(const MyApp());
 }
 
@@ -18,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KrakFlow Lab 09',
+      title: 'KrakFlow Lab 13',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
       home: const HomeScreen(),
     );
@@ -52,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<Task>> _loadTasks() async {
-    await TaskSyncService.loadInitialDataIfNeeded(); //
+    await TaskSyncService.loadInitialDataIfNeeded();
     final tasks = TaskLocalDatabase.getTasks();
 
     setState(() {
@@ -67,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("KrakFlow (Hive DB)"),
+        title: const Text("KrakFlow (Hive DB + Notyfikacje)"),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep),
@@ -119,8 +121,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         leading: Checkbox(
                           value: task.done,
                           onChanged: (val) async {
-                            task.done = val ?? false;
-                            await TaskLocalDatabase.updateTask(task); // Zapis do bazy
+                            final isDone = val ?? false;
+                            final wasDone = task.done;
+
+                            task.done = isDone;
+                            await TaskLocalDatabase.updateTask(task);
+
+                            if (!wasDone && isDone) {
+                              await NotificationService.showTaskDoneNotification(task.title);
+                            }
+
                             _refreshTasks();
                           },
                         ),
@@ -162,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
 
 class AddTaskScreen extends StatelessWidget {
   final tc = TextEditingController();

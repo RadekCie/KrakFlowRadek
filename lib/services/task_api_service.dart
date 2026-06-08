@@ -18,7 +18,7 @@ class TaskApiService {
 
       return todos.map((todo) {
         return Task(
-          id: todo["id"], // Pobieramy ID z API
+          id: todo["id"],
           title: todo["todo"],
           done: todo["completed"],
           deadline: deadlines[random.nextInt(deadlines.length)],
